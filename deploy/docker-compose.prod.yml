@@ -143,7 +143,7 @@ services:
   # Bundled S3-compatible storage. Enabled by COMPOSE_PROFILES=minio in .env (the default in .env.prod.example).
   minio:
     profiles: ["minio"]
-    image: ${MINIO_IMAGE:-cgr.dev/chainguard/minio:latest-dev@sha256:5ed9207c9d1bf50e2b0aa917ffb0fede5507651178b7bd4119ff75319e7fdeec}
+    image: ${MINIO_IMAGE:-cgr.dev/chainguard/minio:latest-dev@sha256:22660c7a21cfe5ff9cb3376af8f00d5475a0bf15e4a8ad3951d7ad99a9adf2e1}
     restart: unless-stopped
     logging: *default-logging
     command: ["server", "/data", "--console-address", ":9001"] # the console port is not published; use an SSH tunnel
