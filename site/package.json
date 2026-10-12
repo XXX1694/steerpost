@@ -29,6 +29,6 @@
     "mermaid": "11.17.2"
   },
   "devDependencies": {
-    "playwright-core": "1.63.0"
+    "playwright-core": "1.64.0"
   }
 }
