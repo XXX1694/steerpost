@@ -88,7 +88,7 @@ services:
   minio:
     # MinIO stopped publishing images (Docker Hub removed minio/minio in Sept 2026), so this uses Chainguard's
     # maintained build. Pinned by digest; Dependabot proposes updates. The -dev variant ships wget for the healthcheck.
-    image: ${MINIO_IMAGE:-cgr.dev/chainguard/minio:latest-dev@sha256:5ed9207c9d1bf50e2b0aa917ffb0fede5507651178b7bd4119ff75319e7fdeec}
+    image: ${MINIO_IMAGE:-cgr.dev/chainguard/minio:latest-dev@sha256:22660c7a21cfe5ff9cb3376af8f00d5475a0bf15e4a8ad3951d7ad99a9adf2e1}
     command: ["server", "/data", "--console-address", ":9001"]
     environment:
       MINIO_ROOT_USER: ${S3_ACCESS_KEY:-socialos}
