@@ -105,7 +105,7 @@ describe('OnboardingChecklist', () => {
     apiMock.developer.mcpConnections.mockResolvedValue([live]);
     const { unmount } = render(<OnboardingChecklist connectedAccounts={1} />);
     await screen.findByText('Set up');
-    expect(window.localStorage.getItem(ONBOARDING_COMPLETE_KEY)).toBe('1');
+    await waitFor(() => expect(window.localStorage.getItem(ONBOARDING_COMPLETE_KEY)).toBe('1'));
     unmount();
     apiMock.posts.list.mockClear();
     render(<OnboardingChecklist connectedAccounts={1} />);

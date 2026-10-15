@@ -1,0 +1,16 @@
+<!doctype html>
+<html><body style="font-family:sans-serif;line-height:1.5;color:#111">
+<p>An AI agent that calls itself <strong>{{.AgentName}}</strong> asked for access to {{if .NewAccount}}a new {{.Product}} account for this email address{{else}}your {{.Product}} account{{end}}. Nothing works until you confirm.</p>
+<p>Once you confirm, the agent can:</p>
+<ul>
+<li>see your connected accounts, posts and analytics</li>
+<li>write drafts and upload media</li>
+<li>schedule posts at least 5 minutes ahead; they publish at that time without another check</li>
+<li>connect social networks with credentials you give it, without asking you each time</li>
+</ul>
+<p>It cannot publish immediately, delete posts or disconnect accounts. You can revoke it at any time under Developer &gt; MCP connections.</p>
+{{if not .NewAccount}}<p>You will be asked to sign in to {{.Product}} first.</p>
+{{end}}<p><a href="{{.Link}}">Review and confirm</a></p>
+<p>The link expires in {{.ExpiresIn}}. Didn't expect this? Ignore this email. The agent's key never works without your confirmation.</p>
+<p style="color:#666;font-size:13px">{{.Product}}</p>
+</body></html>

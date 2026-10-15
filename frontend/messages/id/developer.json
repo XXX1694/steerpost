@@ -95,6 +95,7 @@
     "colActions": "Tindakan",
     "badgeTrusted": "Tepercaya: bertindak tanpa bertanya",
     "badgeAsks": "Bertanya sebelum tindakan berbahaya",
+    "badgeTrustedConnect": "Dapat menghubungkan akun",
     "expired": "Berakhir",
     "revoke": "Cabut",
     "revokeLabel": "Cabut {name}",

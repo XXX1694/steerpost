@@ -95,6 +95,7 @@
     "colActions": "操作",
     "badgeTrusted": "信頼済み：確認なしで動作",
     "badgeAsks": "危険な操作の前に確認",
+    "badgeTrustedConnect": "アカウントを接続できる",
     "expired": "期限切れ",
     "revoke": "無効化",
     "revokeLabel": "{name}を無効化",

@@ -6,6 +6,15 @@ GitHub Release whose notes are the matching section of this file (see "Releasing
 
 ## [Unreleased]
 
+### Added
+
+- Agent sign-up over MCP, API side (D-025). `POST /api/v1/auth/agent-signups {email, agent_name, accept_terms}` answers `201` with a raw key, `status: pending_confirmation`, the scopes, `dangerous_policy: trusted_connect`, the masked address, `expires_at` (24 h) and `delivery`, the same for every address; the worker mails the owner a confirmation link (`/agent-access#token=…`, new-account or existing-account variant; nothing for disabled or deleting accounts; at most 5 per address per day, enforced atomically; a redelivered task never replaces a mailed link). The agent name allows letters, digits, spaces and `-_.()'` but no letter or digit right after a dot, so no domain can reach the mail. `POST /auth/agent-signups/preview|confirm|decline {token}` let the owner review, confirm or refuse. Confirming creates the account (no password, email verified, Terms stored, signed in) or, for an existing account, needs that account's own session; it then activates the key the agent already holds and adds an MCP connection under Developer. Until then the key answers `403 KEY_PENDING_CONFIRMATION` on every route. New `dangerous_policy` `trusted_connect` skips only the approval for connecting a token network. Audit: `agent_signup.confirmed`, and `api_key.created` / `user.registered` with `method: agent_signup`. Migration 00009 adds `agent_signups` and widens the `api_keys.dangerous_policy` check.
+
+### Changed
+
+- Rate limits on anonymous routes use the client address the MCP gateway vouches for (`X-SocialOS-Client-IP` with a valid `MCP_GATEWAY_SECRET`), so agents behind one MCP server no longer share one bucket. A forged header still counts against the caller's own address.
+- `actor.NeedsApproval` takes the action, so a key's policy can skip approval for one action only (`trusted_connect`). `MaskEmail` moved from the mail adapter to `domain/user`.
+
 ## [0.5.0] - 2026-10-10
 
 ### Added

@@ -141,7 +141,7 @@ metadata cannot hold the secret because the account API returns it.
 credential in the encrypted vault, reusing the OAuth upsert and audit path. The scope `social:connect` is **critical**
 and never part of a default set: an agent that can connect accounts can attach a credential it chose, so it is granted
 on purpose. Browser sessions always may connect. Once server-side approvals exist, a key-initiated connect should need
-the owner's approval like other dangerous actions. MCP gets no connect tool.
+the owner's approval like other dangerous actions. MCP gets no connect tool (reversed by D-025).
 
 **Alternatives.** An endpoint per provider (rejected: duplication). Secrets in `metadata` (rejected: returned by the
 API). Allowing sessions only (rejected: it blocks the API-key testing flow in PLATFORMS).
@@ -672,3 +672,49 @@ shell and status tags, then cards, motion and the landing. Product screenshots a
 app screens change. Japanese and Chinese pages now download a few hundred kilobytes of font slices on first visit (measured
 in the font PR); English and Cyrillic pages get lighter. The wordmark keeps its Inter outlines until it is redrawn
 separately.
+
+## D-025: AI agents can sign up over MCP for a key their owner confirms by mail, with connect trust only (2026-10-15)
+
+**Context.** Third-party agents (Claude Desktop and the like) should be able to onboard a person without that person first
+clicking through the web app: create the account, connect a token network (a Discord webhook) and schedule posts. D-009 said
+"MCP gets no connect tool", and every key so far was minted by a signed-in owner. An unauthenticated endpoint that mints keys
+and creates accounts invites account pre-hijacking, address enumeration and mail bombing.
+
+**Decision.** `POST /auth/agent-signups` (public, MCP tool `sign_up`) takes an email, an agent name and the owner's Terms
+acceptance, and answers `201` with a raw key that does not work yet. The request is a row in `agent_signups` only: no user
+and no API key exist until the owner presses Confirm in the mailed link (`/agent-access#token=…`, 24 h). The HTTP side never
+looks the address up and answers the same shape for every address; the worker decides the mail variant (new account or
+existing account) and mails nobody for disabled or deleting accounts or past 5 mails per address per day. Confirming deletes
+the request and, in the same transaction, stores the key under the hash the agent already holds plus an MCP connection, so
+the owner sees and revokes it under Developer.
+- A new address gets an account without a password, verified by the link, with the Terms stored at confirmation (D-016) and
+  a session, so the owner can set a password at once (D-023's fresh-session rule).
+- An existing account is never signed in by the link: confirming needs that account's own session (`401` signed out, `403`
+  as someone else). A link in a forwarded or leaked mail therefore cannot take over an account.
+- The key gets the default scopes plus `social:connect` and the new `dangerous_policy` `trusted_connect`: connecting a
+  token network skips the approval (that is the point of unattended onboarding), every other dangerous action still needs it
+  (D-013), and the scopes exclude publish-now, delete and disconnect. An agent schedules at least `AGENT_MIN_SCHEDULE_LEAD`
+  ahead without asking; a post then publishes at its time.
+- Until confirmed the key answers every route `403 KEY_PENDING_CONFIRMATION` with the masked address, the expiry and the
+  scopes, so the agent tells its owner instead of signing up again.
+
+This reverses the last sentence of D-009: MCP gets `connect_account` and `list_platforms`.
+
+**Alternatives.** `trusted` for agent keys: it would let an agent publish now or delete without the owner, which is exactly
+what D-013 forbids. Approval for every connect: the owner would have to open the web app during onboarding anyway, which
+defeats the feature. Creating the user (unverified) at sign-up: an attacker could pre-register a victim's address and wait;
+the account would also exist for someone who never asked. Answering differently for known addresses ("you already have an
+account"): an enumeration oracle. Signing an existing account in by the link: mail is a weaker factor than the owner's
+password or provider, and the link travels through an agent's hands.
+
+**Consequences.** One more public, mail-sending endpoint: it sits behind the auth and mail limiters per client, and the
+limiter now keys anonymous requests by the address the MCP gateway vouches for (`X-SocialOS-Client-IP` with
+`MCP_GATEWAY_SECRET`), otherwise every agent behind one MCP server would share one bucket. The agent name is limited to
+letters, digits, spaces and `-_.()'`, with no letter or digit right after a dot, so it cannot hold a domain that a mail client
+would turn into a link ("verify at steerpost-help.com"); this also refuses version numbers like "3.5". It is HTML-escaped in
+the mail, and the mail carries no agent-supplied URL. The daily mail cap is counted and claimed in one transaction under a
+per-address advisory lock, so a burst processed by several workers cannot pass it, and a request gets its token once: a
+redelivered task does not replace the link already mailed. A link opened
+by someone who is signed in to another account gets `409` and must sign out first. Confirm and decline require
+`Content-Type: application/json`, so a cross-site page cannot confirm for a visitor (login CSRF). Down migration 00009 turns
+`trusted_connect` keys into `approve`.

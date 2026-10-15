@@ -127,7 +127,7 @@ type Key struct {
 	RevokedAt       *time.Time
 	LastUsedAt      *time.Time
 	CreatedAt       time.Time
-	DangerousPolicy string // "approve" (default) or "trusted"; see approval.Policy*
+	DangerousPolicy string // "approve" (default), "trusted" or "trusted_connect"; see approval.Policy*
 }
 
 // Usable reports whether the key may authenticate at time now.

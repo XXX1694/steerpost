@@ -332,7 +332,7 @@ Pushover, Pushbullet or Splunk; Telegram (and Slack) start at the paid Solo plan
 |---|---|---|---|---|---|
 | 1 | Steerpost app health | Keyword | <https://app.194-238-43-194.sslip.io/api/v1/health> | `"status":"ok"` | the app host answers and Caddy routes `/api` to the backend |
 | 2 | Steerpost API ready | Keyword | <https://api.194-238-43-194.sslip.io/api/v1/ready> | `"status":"ok"` | the API and its Postgres, Redis and storage (it answers `503 "unavailable"` when one is down) |
-| 3 | Steerpost MCP health | Keyword | <https://mcp.194-238-43-194.sslip.io/health> | `socialos-mcp` | the MCP server (`MCP_PUBLIC_URL` with `/mcp` replaced by `/health`; `/mcp` itself only takes POST) |
+| 3 | Steerpost MCP health | Keyword | <https://mcp.194-238-43-194.sslip.io/health> | `"status":"ok"` | the MCP server (`MCP_PUBLIC_URL` with `/mcp` replaced by `/health`; `/mcp` itself only takes POST) |
 | 4 | Steerpost web login | HTTP(s) | <https://app.194-238-43-194.sslip.io/login> | none (expects 2xx) | the Next.js frontend renders |
 
 These are the repository variables `API_PUBLIC_URL` (`https://api.194-238-43-194.sslip.io`) and `MCP_PUBLIC_URL`

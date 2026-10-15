@@ -17,5 +17,5 @@ regexes = [
   # Obvious sequential placeholder used as a Telegram webhook secret in config and e2e tests.
   '''(whsec_)?0123456789abcdef0123456789abcdef''',
   # Fake API keys that only prove the backend / MCP server reject unknown keys.
-  '''sk_live_(notarealkey|testkey123)''',
+  '''sk_live_(notarealkey|testkey123|pending123)''',
 ]

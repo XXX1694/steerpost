@@ -272,8 +272,11 @@ export interface ApiKey {
   revoked_at: string | null;
   last_used_at: string | null;
   created_at: string;
-  /** `approve`: publish, delete, disconnect and near-term schedules wait for the owner (default). `trusted`: they do not. */
-  dangerous_policy?: 'approve' | 'trusted';
+  /**
+   * `approve`: publish, delete, disconnect and near-term schedules wait for the owner (default). `trusted`: they do not.
+   * `trusted_connect`: only connecting a network skips the wait; given to keys an agent signed up for (D-025).
+   */
+  dangerous_policy?: 'approve' | 'trusted' | 'trusted_connect';
 }
 
 export interface CreatedApiKey {

@@ -123,8 +123,12 @@ func NewRouter(svc Services, opt Options) http.Handler {
 				r.Get("/auth/oauth/{provider}/start", a.oauthStart)
 				r.Get("/auth/oauth/{provider}/callback", a.oauthCallback)
 				r.Post("/auth/oauth/complete", a.oauthComplete)
+				r.Post("/auth/agent-signups/preview", a.previewAgentSignup)
+				r.Post("/auth/agent-signups/confirm", a.confirmAgentSignup)
+				r.Post("/auth/agent-signups/decline", a.declineAgentSignup)
 				r.Group(func(r chi.Router) {
 					r.Use(middleware.RateLimit(opt.MailLimiter, a.trusted, opt.Metrics, "mail:"))
+					r.Post("/auth/agent-signups", a.createAgentSignup)
 					r.Post("/auth/verify-email", a.verifyEmail)
 					r.Post("/auth/password/forgot", a.forgotPassword)
 					r.Post("/auth/password/reset", a.resetPassword)

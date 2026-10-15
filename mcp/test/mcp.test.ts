@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { ALL_SCOPES, VALID_KEY, connect, startStack, text, type Stack } from "./helpers.js";
+import { VALID_KEY, connect, startStack, text, type Stack } from "./helpers.js";
 
 let s: Stack;
 beforeAll(async () => { s = await startStack(); });
@@ -7,12 +7,13 @@ afterAll(async () => { await s.stop(); });
 beforeEach(() => { s.api.calls.length = 0; s.api.replies.clear(); });
 
 const EXPECTED_TOOLS = [
+  "list_platforms", "connect_account",
   "list_social_accounts", "get_social_account", "list_posts", "get_post", "get_post_status", "get_analytics", "get_usage",
   "create_draft", "update_post", "schedule_post", "cancel_scheduled_post", "publish_post", "delete_post", "disconnect_account",
 ];
 
 describe("tool listing", () => {
-  it("lists all 14 tools with annotations and risk labels for a full-scope key", async () => {
+  it("lists all 16 keyed tools (never sign_up) with annotations and risk labels for a full-scope key", async () => {
     const c = await connect(s.mcpUrl);
     const { tools } = await c.listTools();
     expect(tools.map((t) => t.name).sort()).toEqual([...EXPECTED_TOOLS].sort());
@@ -38,7 +39,7 @@ describe("tool listing", () => {
     s.api.keys.set("sk_live_readonly", ["posts:read", "social:read"]);
     const c = await connect(s.mcpUrl, "sk_live_readonly");
     const names = (await c.listTools()).tools.map((t) => t.name).sort();
-    expect(names).toEqual(["get_post", "get_post_status", "get_social_account", "list_posts", "list_social_accounts"]);
+    expect(names).toEqual(["get_post", "get_post_status", "get_social_account", "list_platforms", "list_posts", "list_social_accounts"]);
     await c.close();
   });
 
@@ -63,6 +64,11 @@ describe("tool listing", () => {
 
 describe("tool -> REST mapping", () => {
   const cases: { name: string; args: Record<string, unknown>; method: string; path: string; body?: unknown }[] = [
+    { name: "list_platforms", args: {}, method: "GET", path: "/social/providers" },
+    {
+      name: "connect_account", args: { provider: "mocktoken", fields: { api_key: "mt_abc" } },
+      method: "POST", path: "/social/accounts/token", body: { provider: "mocktoken", fields: { api_key: "mt_abc" } },
+    },
     { name: "list_social_accounts", args: {}, method: "GET", path: "/social/accounts" },
     { name: "get_social_account", args: { account_id: "a1" }, method: "GET", path: "/social/accounts/a1" },
     { name: "list_posts", args: { status: "draft", limit: 5, cursor: "c1" }, method: "GET", path: "/posts?status=draft&limit=5&cursor=c1" },
@@ -275,13 +281,16 @@ describe("HTTP edge", () => {
     expect(await res.json()).toMatchObject({ status: "ok" });
   });
 
-  it("missing bearer -> 401 with challenge", async () => {
+  it("missing bearer -> anonymous server that offers only sign_up, without asking the API", async () => {
+    s.api.meCalls.length = 0;
     const res = await post({});
-    expect(res.status).toBe(401);
-    expect(res.headers.get("www-authenticate")).toContain("Bearer");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { result: { tools: { name: string }[] } };
+    expect(body.result.tools.map((t) => t.name)).toEqual(["sign_up"]);
+    expect(s.api.meCalls).toHaveLength(0);
   });
 
-  it.each(["Basic abc", "Bearer", "Bearer not_a_key"])("malformed auth %j -> 401", async (h) => {
+  it.each(["", "Basic abc", "Bearer", "Bearer not_a_key"])("malformed auth %j -> 401", async (h) => {
     expect((await post({ Authorization: h })).status).toBe(401);
   });
 
@@ -318,7 +327,7 @@ describe("HTTP edge", () => {
   it("serves independent stateless requests concurrently", async () => {
     const clients = await Promise.all([connect(s.mcpUrl), connect(s.mcpUrl), connect(s.mcpUrl)]);
     const lists = await Promise.all(clients.map((c) => c.listTools()));
-    for (const l of lists) expect(l.tools).toHaveLength(ALL_SCOPES.length >= 9 ? 14 : 0);
+    for (const l of lists) expect(l.tools).toHaveLength(EXPECTED_TOOLS.length);
     await Promise.all(clients.map((c) => c.close()));
   });
 });

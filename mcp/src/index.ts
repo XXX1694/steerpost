@@ -4,16 +4,21 @@ import { SocialOSClient } from "./api-client.js";
 import { loadConfig, readEnv } from "./config.js";
 import { createHttpServer } from "./http.js";
 import { log } from "./log.js";
-import { buildServer } from "./server.js";
+import { buildServer, resolveAccess } from "./server.js";
 
 async function runStdio(): Promise<void> {
   const config = loadConfig();
   const apiKey = readEnv(process.env, "API_KEY");
-  if (!apiKey) throw new Error("STEERPOST_API_KEY (or the legacy SOCIALOS_API_KEY) is required in stdio mode");
   const client = new SocialOSClient({ baseUrl: config.apiUrl, apiKey, timeoutMs: config.timeoutMs });
-  const { scopes } = await client.me();
-  await buildServer(client, scopes).connect(new StdioServerTransport());
-  log("info", "socialos-mcp stdio ready", { tools_scopes: scopes.length });
+  if (!apiKey) {
+    // Without a key the agent can only sign up; it restarts this server with the key it gets back.
+    await buildServer(client, [], "anonymous").connect(new StdioServerTransport());
+    log("info", "socialos-mcp stdio ready without STEERPOST_API_KEY: only sign_up is available", { mode: "anonymous" });
+    return;
+  }
+  const { mode, scopes } = await resolveAccess(client);
+  await buildServer(client, scopes, mode).connect(new StdioServerTransport());
+  log("info", "socialos-mcp stdio ready", { mode, tools_scopes: scopes.length });
 }
 
 function runHttp(): void {

@@ -21,7 +21,7 @@ type recGate struct {
 }
 
 func (g *recGate) Require(_ context.Context, a actor.Actor, req approval.Request) error {
-	if !a.NeedsApproval() {
+	if !a.NeedsApproval(req.Action) {
 		return nil
 	}
 	g.reqs = append(g.reqs, req)

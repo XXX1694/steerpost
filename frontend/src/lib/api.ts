@@ -1,3 +1,4 @@
+import { normalizeAgentAccessConfirmed, normalizeAgentAccessPreview, type AgentAccessConfirmed, type AgentAccessPreview } from './agent-access';
 import { ApiError, parseErrorBody } from './api-error';
 import { API_BASE, buildQuery, enc, request, setCsrfToken, uploadBase } from './api-http';
 import {
@@ -150,6 +151,18 @@ export const api = {
     /** For accounts without a password (409 otherwise). Signs the other sessions out; a session older than 10 minutes is 403 REAUTH_REQUIRED. */
     async setPassword(newPassword: string): Promise<void> {
       await request('/auth/password/set', { method: 'POST', body: { new_password: newPassword } });
+    },
+    /** What a mailed agent-access link (D-025) would confirm. An unknown, used or expired token is a 400. */
+    async agentSignupPreview(token: string): Promise<AgentAccessPreview> {
+      return normalizeAgentAccessPreview(await request('/auth/agent-signups/preview', { method: 'POST', body: { token } }));
+    },
+    /** Activates the agent's key. A new account is created and signed in; an existing one needs its own session (401, 403). */
+    async agentSignupConfirm(input: { token: string; accept_terms: boolean; display_name?: string }): Promise<AgentAccessConfirmed> {
+      return normalizeAgentAccessConfirmed(await request('/auth/agent-signups/confirm', { method: 'POST', body: input }));
+    },
+    /** Refuses the request: the pending key never works. */
+    async agentSignupDecline(token: string): Promise<void> {
+      await request('/auth/agent-signups/decline', { method: 'POST', body: { token } });
     },
   },
   social: {

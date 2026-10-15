@@ -26,6 +26,8 @@ const (
 	IdentityLinked = "identity_linked"
 	// IdentityUnlinked tells the owner that a sign-in provider was disconnected.
 	IdentityUnlinked = "identity_unlinked"
+	// AgentAccess asks the owner to confirm an AI agent's sign-up (D-025).
+	AgentAccess = "agent_access"
 )
 
 //go:embed templates/*.tmpl
@@ -43,6 +45,11 @@ type Data struct {
 	Date string
 	// Provider is the display name of a linked sign-in provider (identity_linked).
 	Provider string
+	// AgentName is the name the agent gave itself (agent_access). It is validated to letters, digits, spaces and a few
+	// punctuation marks, and the HTML part escapes it anyway.
+	AgentName string
+	// NewAccount selects the agent_access variant: true when no account uses the address yet.
+	NewAccount bool
 }
 
 var subjects = map[string]string{
@@ -54,6 +61,7 @@ var subjects = map[string]string{
 	IdentityLinked:           "A sign-in method was added to your " + ProductName + " account",
 	IdentityUnlinked:         "A sign-in method was removed from your " + ProductName + " account",
 	ExportReady:              "Your " + ProductName + " data export is ready",
+	AgentAccess:              "An AI agent asks for access to " + ProductName,
 }
 
 type pair struct {

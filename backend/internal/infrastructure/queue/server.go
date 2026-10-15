@@ -51,6 +51,7 @@ type ExportTasks interface {
 // AuthTasks is what the worker needs from the auth service.
 type AuthTasks interface {
 	ProcessForgot(ctx context.Context, email string) error
+	ProcessAgentSignup(ctx context.Context, id uuid.UUID) error
 	RetireMailToken(ctx context.Context, tokenID string) error
 }
 
@@ -104,6 +105,7 @@ func NewServer(redis asynq.RedisConnOpt, cfg ServerConfig, pub *scheduler.Publis
 	}
 	if cfg.Auth != nil {
 		mux.HandleFunc(TypeAuthForgot, ForgotHandler(cfg.Auth.ProcessForgot))
+		mux.HandleFunc(TypeAgentSignup, AgentSignupHandler(cfg.Auth.ProcessAgentSignup))
 	}
 	s := &Server{srv: srv, mux: mux}
 	if cfg.Exports != nil || cfg.Purge != nil {

@@ -214,7 +214,8 @@ type apiKeyDTO struct {
 	RevokedAt  *time.Time `json:"revoked_at"`
 	LastUsedAt *time.Time `json:"last_used_at"`
 	CreatedAt  time.Time  `json:"created_at"`
-	// DangerousPolicy: "approve" asks the owner before publish, delete and disconnect; "trusted" does not.
+	// DangerousPolicy: "approve" asks the owner before publish, delete and disconnect; "trusted" does not; "trusted_connect"
+	// (agent sign-up keys, D-025) skips only the approval for connecting a token network.
 	DangerousPolicy string `json:"dangerous_policy"`
 }
 

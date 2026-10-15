@@ -167,7 +167,15 @@ func (s *Service) RetireMailToken(ctx context.Context, tokenID string) error {
 	if err != nil {
 		return nil
 	}
-	return s.tokens.RetireByID(ctx, id, s.clock.Now())
+	if err := s.tokens.RetireByID(ctx, id, s.clock.Now()); err != nil {
+		return err
+	}
+	// An agent sign-up mail carries the request's id instead (ids are random UUIDs, so each table finds only its
+	// own): the request is dropped, so its key can never be confirmed through a link stuck in the archive.
+	if s.agents == nil {
+		return nil
+	}
+	return s.agents.signups.DeleteByID(ctx, id)
 }
 
 // ResetPassword redeems a reset token, sets the password and signs the user out everywhere.

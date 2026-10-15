@@ -12,7 +12,9 @@ export type Scope =
   | "social:disconnect"
   | "social:connect"
   | "media:write"
-  | "analytics:read";
+  | "analytics:read"
+  /** No key needed: the only tools an anonymous caller sees (sign_up). Never shown to a caller with a key. */
+  | "public";
 
 export type Risk = "safe" | "low" | "medium" | "sensitive" | "critical";
 

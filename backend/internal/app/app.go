@@ -184,7 +184,7 @@ func (a *App) wire(cfg *config.Config, log *slog.Logger, ov Overrides) error {
 	authSvc, err := auth.NewService(auth.Deps{Users: postgres.NewUsers(db), Sessions: postgres.NewSessions(db), APIKeys: keyRepo,
 		Hasher: hasher, Tx: db, Audit: auditSvc, Clock: clk, SessionTTL: cfg.SessionTTL,
 		Tokens: postgres.NewEmailTokens(db), Mail: a.MailQueue, Forgot: a.Queue.ForgotQueue(), Log: log, WebBaseURL: cfg.WebBaseURL,
-		RequireVerification: requireVerification(cfg), Social: social})
+		RequireVerification: requireVerification(cfg), Social: social, AgentSignup: buildAgentSignup(db, a.Queue, keyRepo)})
 	if err != nil {
 		return fmt.Errorf("auth service: %w", err)
 	}

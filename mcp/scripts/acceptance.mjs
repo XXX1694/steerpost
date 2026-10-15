@@ -3,8 +3,10 @@
 // SOCIAL_MOCK_PROVIDERS=true, a running worker and a running MCP server (MCP_URL).
 //
 //   node scripts/acceptance.mjs
+// After the MVP flow it runs the agent sign-up flow (scripts/acceptance-agent-signup.mjs); SKIP_AGENT_SIGNUP=1 skips it.
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { runAgentSignupFlow } from "./acceptance-agent-signup.mjs";
 
 const API = process.env.SOCIALOS_API_URL ?? "http://127.0.0.1:8080";
 const MCP_URL = process.env.MCP_URL ?? "http://127.0.0.1:3333/mcp";
@@ -141,3 +143,12 @@ step(`dashboard: published_this_month=${summary.published_this_month}; audit has
 
 await client.close();
 console.log("\nACCEPTANCE FLOW PASSED");
+
+// 16. a second agent signs its owner up over MCP, without a key made by hand (D-025)
+if (process.env.SKIP_AGENT_SIGNUP !== "1") {
+  try {
+    await runAgentSignupFlow({ api: API, mcpUrl: MCP_URL });
+  } catch (e) {
+    assert(false, e instanceof Error ? e.message : String(e));
+  }
+}

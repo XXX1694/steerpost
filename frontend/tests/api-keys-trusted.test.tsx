@@ -41,6 +41,14 @@ describe('key policy in the key list', () => {
     expect(await screen.findAllByText('Trusted: acts without asking')).toHaveLength(1);
     expect(screen.getAllByText('Asks before dangerous actions')).toHaveLength(1);
   });
+
+  it('marks a key an agent signed up for as one that can connect accounts, not as trusted (D-025)', async () => {
+    apiMock.developer.apiKeys.mockResolvedValue([key({ name: 'Claude Desktop', scopes: ['social:connect'], dangerous_policy: 'trusted_connect' })]);
+    render(<ApiKeysView />);
+    expect(await screen.findByText('Can connect accounts')).toBeInTheDocument();
+    expect(screen.queryByText('Trusted: acts without asking')).not.toBeInTheDocument();
+    expect(screen.queryByText('Asks before dangerous actions')).not.toBeInTheDocument();
+  });
 });
 
 describe('creating a trusted key', () => {

@@ -10,7 +10,8 @@
     "src/components/legal/privacy-content.tsx": "Privacy Policy: binding text, English only (plan 2, Message layout).",
     "src/lib/demo/quota.ts": "Demo quota refusals simulate the API's English error messages, which stay English (D-021).",
     "src/lib/demo/social-signin.ts": "Demo provider sign-in simulates the API: its messages stay English and the sample person is seed content (D-021).",
-    "src/lib/demo/exports.ts": "Demo export messages simulate the API's English error messages and the archive note is file content, not UI (D-021)."
+    "src/lib/demo/exports.ts": "Demo export messages simulate the API's English error messages and the archive note is file content, not UI (D-021).",
+    "src/lib/demo/agent-access.ts": "Demo agent sign-up simulates the API: its messages stay English and the agent name is seed content (D-021)."
   },
   "texts": {
     "src/components/brand/logo.tsx": {

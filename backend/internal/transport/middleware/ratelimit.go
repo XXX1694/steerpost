@@ -107,7 +107,7 @@ func (l *Limiter) Sweep() {
 func RateLimit(l *Limiter, trusted TrustedProxies, m *observability.Metrics, prefix string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			key := prefix + "ip:" + bucketAddr(ClientIP(r, trusted))
+			key := prefix + "ip:" + bucketAddr(limitIP(r, trusted))
 			if a, ok := actor.From(r.Context()); ok {
 				key = prefix + string(a.Type) + ":" + a.ID
 			}
@@ -122,6 +122,16 @@ func RateLimit(l *Limiter, trusted TrustedProxies, m *observability.Metrics, pre
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+// limitIP is the address an anonymous request is throttled by: the end client's as vouched for by the MCP gateway
+// (Gateway, with MCP_GATEWAY_SECRET), so agents behind one MCP server do not share a single bucket, and otherwise the
+// one resolved through TRUSTED_PROXIES. A forged gateway header without the secret changes nothing.
+func limitIP(r *http.Request, trusted TrustedProxies) string {
+	if ip, ok := gatewayIP(r.Context()); ok {
+		return ip
+	}
+	return ClientIP(r, trusted)
 }
 
 // bucketAddr maps a client address to the unit that shares a bucket: an IPv4 address is its own unit, but an IPv6

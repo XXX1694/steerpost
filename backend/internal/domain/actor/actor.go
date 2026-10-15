@@ -41,14 +41,26 @@ type Actor struct {
 	// DeletionScheduled is set by authentication when the owner asked for account deletion and has not cancelled.
 	// Such an account cannot schedule or publish anything (RequireNotDeleting).
 	DeletionScheduled bool
-	// DangerousPolicy is the API key's dangerous_policy ("approve" or "trusted"); empty means "approve".
+	// DangerousPolicy is the API key's dangerous_policy ("approve", "trusted" or "trusted_connect"); empty means
+	// "approve".
 	DangerousPolicy string
 }
 
-// NeedsApproval reports whether a dangerous action by this actor must be approved by the owner first: API keys do,
-// unless the owner marked the key trusted. Sessions, the scheduler and system actors never do.
-func (a Actor) NeedsApproval() bool {
-	return a.Type == TypeAPIKey && a.DangerousPolicy != approval.PolicyTrusted
+// NeedsApproval reports whether the dangerous action by this actor must be approved by the owner first: API keys do,
+// unless the owner marked the key trusted, or the key is trusted_connect and the action is connecting a token network
+// (D-025). Sessions, the scheduler and system actors never do.
+func (a Actor) NeedsApproval(action approval.Action) bool {
+	if a.Type != TypeAPIKey {
+		return false
+	}
+	switch a.DangerousPolicy {
+	case approval.PolicyTrusted:
+		return false
+	case approval.PolicyTrustedConnect:
+		return action != approval.ActionAccountConnect
+	default:
+		return true
+	}
 }
 
 // FreshSessionWindow is how recently a session must have been issued to count as a recent sign-in: it stands in for a

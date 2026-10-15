@@ -11,7 +11,7 @@ export const readTools = [
     scope: "social:read",
     risk: "safe",
     description:
-      "List the social accounts connected to Steerpost (id, provider, username, status). Use the returned ids as social_account_ids when creating posts. Accounts with status 'expired' cannot publish until the user reconnects them. Agents cannot connect or reconnect accounts through MCP: the user does that in the Steerpost web app. An account's metadata may carry its own limits (for example max_characters), and some networks need a post title; the REST API rejects posts that break them.",
+      "List the social accounts connected to Steerpost (id, provider, username, status). Use the returned ids as social_account_ids when creating posts. Accounts with status 'expired' cannot publish until the user reconnects them. Networks that connect with a pasted credential can be connected with connect_account (needs the social:connect scope; list_platforms shows how each network connects); OAuth and Telegram accounts are connected or reconnected by the user in the Steerpost web app. An account's metadata may carry its own limits (for example max_characters), and some networks need a post title; the REST API rejects posts that break them.",
     inputSchema: {},
     annotations: { title: "List social accounts", ...readOnly },
     handler: (c) => c.request("GET", "/social/accounts"),

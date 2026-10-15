@@ -20,6 +20,7 @@ export const BUNDLES = [
   'composer',
   'media',
   'developer',
+  'agentAccess',
 ] as const;
 
 /** The shape of the English catalog; every key path is typed from it. */
@@ -41,4 +42,5 @@ export type Messages = {
   composer: typeof import('../../messages/en/composer.json');
   media: typeof import('../../messages/en/media.json');
   developer: typeof import('../../messages/en/developer.json');
+  agentAccess: typeof import('../../messages/en/agentAccess.json');
 };

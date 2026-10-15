@@ -73,7 +73,7 @@ func bindingOf(a *approval.Approval) Binding {
 // Require implements port.ApprovalGate: nil, or *port.ApprovalNeeded for the caller to pass to Open once its
 // transaction is over.
 func (s *Service) Require(ctx context.Context, a actor.Actor, req approval.Request) error {
-	if !a.NeedsApproval() {
+	if !a.NeedsApproval(req.Action) {
 		return nil
 	}
 	now := s.clock.Now()

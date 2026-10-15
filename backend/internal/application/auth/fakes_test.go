@@ -46,7 +46,11 @@ func (a *auditFake) Record(_ context.Context, _ actor.Actor, action, _, _ string
 	return nil
 }
 
-type usersFake struct{ byID map[uuid.UUID]*user.User }
+type usersFake struct {
+	byID map[uuid.UUID]*user.User
+	// byEmailCalls counts GetByEmail, so tests can prove a request path never looks an address up.
+	byEmailCalls int
+}
 
 func (f *usersFake) Create(_ context.Context, u *user.User) error {
 	u.ID = uuid.New()
@@ -54,6 +58,7 @@ func (f *usersFake) Create(_ context.Context, u *user.User) error {
 	return nil
 }
 func (f *usersFake) GetByEmail(_ context.Context, e string) (*user.User, error) {
+	f.byEmailCalls++
 	for _, u := range f.byID {
 		if u.Email == e {
 			return u, nil
@@ -223,6 +228,7 @@ type rig struct {
 	audit    *auditFake
 	keys     *keysFake
 	forgotQ  *forgotFake
+	agents   *agentRig
 	clock    *clockFake
 	u        *user.User
 }
@@ -230,9 +236,11 @@ type rig struct {
 func newRig(t testing.TB, enforce bool) *rig {
 	t.Helper()
 	r := &rig{users: &usersFake{byID: map[uuid.UUID]*user.User{}}, sessions: &sessionsFake{ids: map[uuid.UUID]uuid.UUID{}},
-		tokens: &tokensFake{}, mail: &mailFake{}, audit: &auditFake{}, keys: &keysFake{}, forgotQ: &forgotFake{}, clock: &clockFake{now: time.Date(2026, 10, 9, 12, 0, 0, 0, time.UTC)}}
+		tokens: &tokensFake{}, mail: &mailFake{}, audit: &auditFake{}, keys: &keysFake{}, forgotQ: &forgotFake{}, agents: newAgentRig(),
+		clock: &clockFake{now: time.Date(2026, 10, 9, 12, 0, 0, 0, time.UTC)}}
 	svc, err := NewService(Deps{Users: r.users, Sessions: r.sessions, APIKeys: r.keys, Hasher: plainHasher{}, Tx: inlineTx{},
-		Audit: r.audit, Clock: r.clock, Tokens: r.tokens, Mail: r.mail, Forgot: r.forgotQ, WebBaseURL: "https://app.example/", RequireVerification: enforce})
+		Audit: r.audit, Clock: r.clock, Tokens: r.tokens, Mail: r.mail, Forgot: r.forgotQ, WebBaseURL: "https://app.example/", RequireVerification: enforce,
+		AgentSignup: &AgentSignupDeps{Signups: r.agents.signups, Queue: r.agents.queue, Keys: r.agents.keys}})
 	if err != nil {
 		t.Fatal(err)
 	}
