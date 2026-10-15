@@ -151,8 +151,8 @@ func OpenIfNeeded(ctx context.Context, g ApprovalGate, err error) error {
 type FailClosedGate struct{}
 
 // Require implements ApprovalGate.
-func (FailClosedGate) Require(_ context.Context, a actor.Actor, _ approval.Request) error {
-	if a.NeedsApproval() {
+func (FailClosedGate) Require(_ context.Context, a actor.Actor, req approval.Request) error {
+	if a.NeedsApproval(req.Action) {
 		return errs.New(errs.Internal, "approval gate is not configured")
 	}
 	return nil

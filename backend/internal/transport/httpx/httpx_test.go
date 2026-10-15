@@ -14,7 +14,7 @@ import (
 
 func TestStatusOfCoversEveryCode(t *testing.T) {
 	for code, want := range map[errs.Code]int{
-		errs.Validation: 400, errs.Unauthenticated: 401, errs.Forbidden: 403, errs.InsufficientScope: 403, errs.EmailNotVerified: 403, errs.QuotaExceeded: 403, errs.NotFound: 404,
+		errs.Validation: 400, errs.Unauthenticated: 401, errs.Forbidden: 403, errs.InsufficientScope: 403, errs.EmailNotVerified: 403, errs.QuotaExceeded: 403, errs.KeyPendingConfirmation: 403, errs.NotFound: 404,
 		errs.InvalidStateTransition: 409, errs.Conflict: 409, errs.RateLimited: 429, errs.SocialAccountExpired: 422,
 		errs.ProviderNotAvailable: 501, errs.ProviderError: 502, errs.Internal: 500, errs.Code("SOMETHING_NEW"): 500,
 	} {

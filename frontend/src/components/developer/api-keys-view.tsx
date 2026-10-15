@@ -18,7 +18,7 @@ import { useAsync, useErrorText } from '@/hooks';
 import { nodes } from '@/i18n/rich';
 import { CopyButton } from './copy-block';
 import { ScopePicker } from './scope-picker';
-import { TrustedPolicyField } from './trusted-policy';
+import { PolicyBadge, TrustedPolicyField } from './trusted-policy';
 import { useTranslations } from '@/i18n/use-translations';
 import { useFormat } from '@/i18n/use-format';
 
@@ -129,11 +129,7 @@ function KeyRow({ k, onRevoke }: { k: ApiKey; onRevoke: (k: ApiKey) => void }) {
         <div>
           <p className="font-medium">{k.name}</p>
           <code className="text-xs text-muted-foreground">{k.prefix}…</code>
-          {k.revoked_at ? null : k.dangerous_policy === 'trusted' ? (
-            <Badge tone="warning" className="mt-1.5 flex w-fit">{t('developer.apiKeys.badgeTrusted')}</Badge>
-          ) : (
-            <Badge tone="neutral" className="mt-1.5 flex w-fit">{t('developer.apiKeys.badgeAsks')}</Badge>
-          )}
+          {k.revoked_at ? null : <PolicyBadge policy={k.dangerous_policy} />}
         </div>
       </Td>
       <Td label={t('developer.apiKeys.colScopes')} className="py-3">

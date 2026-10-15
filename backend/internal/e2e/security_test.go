@@ -739,3 +739,41 @@ func TestAccountDeletionIsTenantScoped(t *testing.T) {
 		t.Fatalf("bob has %d accounts", n)
 	}
 }
+
+// A key from a confirmed agent sign-up is an ordinary key of its owner: it never reaches another tenant's data, and a
+// pending one reaches nothing at all.
+func TestAgentSignupKeyIsTenantScoped(t *testing.T) {
+	cm := &captureMailer{}
+	e := newEnv(t, envOpts{startWorker: true, mailer: cm})
+	a := e.browser()
+	a.register("tenant-a@example.com")
+	accA := a.connectMock()
+	postA := a.must("POST", "/api/v1/posts", map[string]any{"content": "A's draft", "social_account_ids": []string{accA}}, 201)["id"].(string)
+	cm.waitMail(t, 1)
+
+	agentB := e.apiKeyClient(signUpAgent(t, e, "tenant-b@example.com"))
+	for _, path := range []string{"/api/v1/posts/" + postA, "/api/v1/social/accounts/" + accA} {
+		wantPending(t, agentB.do("GET", path, nil), "t***@example.com")
+	}
+	e.browser().must("POST", agentSignupPath+"/confirm", map[string]any{"token": agentLinkToken(t, cm, 2), "accept_terms": true}, 200)
+
+	for _, tc := range []struct {
+		method, path string
+		body         any
+	}{
+		{"GET", "/api/v1/posts/" + postA, nil},
+		{"PATCH", "/api/v1/posts/" + postA, map[string]any{"content": "hijacked"}},
+		{"POST", "/api/v1/posts/" + postA + "/schedule", map[string]any{"scheduled_at": fmtTime(time.Now().Add(time.Hour))}},
+		{"GET", "/api/v1/social/accounts/" + accA, nil},
+	} {
+		if r := agentB.do(tc.method, tc.path, tc.body); r.status != http.StatusNotFound {
+			t.Errorf("%s %s with B's agent key: %d %s", tc.method, tc.path, r.status, r.body)
+		}
+	}
+	if items := agentB.must("GET", "/api/v1/posts", nil, 200)["items"].([]any); len(items) != 0 {
+		t.Fatalf("B's agent lists A's posts: %v", items)
+	}
+	if p := a.must("GET", "/api/v1/posts/"+postA, nil, 200); p["content"] != "A's draft" {
+		t.Fatalf("A's post changed: %v", p)
+	}
+}

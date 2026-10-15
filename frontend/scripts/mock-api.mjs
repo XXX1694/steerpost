@@ -185,6 +185,57 @@ function settle(post) {
   }, 900);
 }
 
+const AGENT_SCOPES = ['analytics:read', 'media:write', 'posts:read', 'posts:schedule', 'posts:write', 'social:connect', 'social:read'];
+const agentSignups = new Map([
+  ['agent-new', { email: 'new.owner@example.com', agent_name: 'Claude Desktop', key_prefix: 'sk_live_agnt', fixed: true }],
+  ['agent-existing', { email: 'demo@example.com', agent_name: 'Claude Desktop', key_prefix: 'sk_live_agnt', fixed: true }],
+]);
+
+/** The agent's key starts working: an api_keys row with trusted_connect and an MCP connection the owner can revoke. */
+function activateAgentKey(u, sg) {
+  db.keys.push({ id: randomUUID(), user_id: u.id, name: sg.agent_name, prefix: sg.key_prefix, scopes: AGENT_SCOPES, expires_at: null, revoked_at: null, last_used_at: null, created_at: now(), dangerous_policy: 'trusted_connect' });
+  db.mcp.push({ id: randomUUID(), user_id: u.id, name: sg.agent_name, client_name: sg.agent_name, scopes: AGENT_SCOPES, last_seen_at: null, revoked_at: null, created_at: now() });
+  audit(u.display_name, 'agent_signup.confirmed', 'api_key', null);
+}
+
+function agentSignup(req, res, action, body) {
+  if (!action) {
+    const email = String(body.email ?? '').trim();
+    if (!/^[^\s@]+@[^\s@]+$/.test(email)) return fail(res, 400, 'VALIDATION_ERROR', 'email is invalid', { email: 'invalid' });
+    if (body.accept_terms !== true) return fail(res, 400, 'VALIDATION_ERROR', 'the owner must accept the Terms', { accept_terms: 'must be accepted' });
+    const rawKey = `sk_live_${randomBytes(18).toString('hex')}`;
+    const token = randomBytes(16).toString('hex');
+    agentSignups.set(token, { email, agent_name: String(body.agent_name ?? 'Agent'), key_prefix: rawKey.slice(0, 12) });
+    console.log(`agent sign-up for ${email}: http://localhost:3000/agent-access#token=${token}`);
+    return send(res, 201, { api_key: rawKey, key_prefix: rawKey.slice(0, 12), status: 'pending_confirmation', scopes: AGENT_SCOPES, dangerous_policy: 'trusted_connect', email_masked: `${email[0]}***${email.slice(email.indexOf('@'))}`, expires_at: inFuture(24), delivery: 'log' });
+  }
+  const sg = agentSignups.get(String(body.token ?? ''));
+  if (!sg) return badLink(res);
+  const owner = users.get(sg.email);
+  if (action === 'preview') return send(res, 200, { agent_name: sg.agent_name, email: sg.email, scopes: AGENT_SCOPES, dangerous_policy: 'trusted_connect', account_exists: Boolean(owner), expires_at: inFuture(24) });
+  const spend = () => { if (!sg.fixed) agentSignups.delete(String(body.token)); };
+  if (action === 'decline') { spend(); return send(res, 204); }
+  const sess = sessions.get(cookies(req).socialos_session ?? '');
+  if (sess && req.headers['x-csrf-token'] !== sess.csrf) return fail(res, 403, 'FORBIDDEN', 'Missing or invalid CSRF token');
+  if (!owner) {
+    if (sess) return fail(res, 409, 'CONFLICT', 'sign out before creating another account');
+    if (body.accept_terms !== true) return fail(res, 400, 'VALIDATION_ERROR', 'You must accept the Terms and the Privacy Policy', { accept_terms: 'must be accepted' });
+    const name = String(body.display_name ?? '').trim();
+    if (name.length > 100) return fail(res, 400, 'VALIDATION_ERROR', 'display_name too long', { display_name: 'max 100 characters' });
+    spend();
+    const u = addUser(sg.email, null, name || sg.email);
+    u.verified = true;
+    activateAgentKey(u, sg);
+    const s = newSession(u);
+    return send(res, 200, { ...meBody(u, s), account_created: true }, { 'Set-Cookie': sessionCookies(s) });
+  }
+  if (!sess) return fail(res, 401, 'UNAUTHENTICATED', 'Authentication required');
+  if (sess.userId !== owner.id) return fail(res, 403, 'FORBIDDEN', 'sign in as the account this link was sent to');
+  spend();
+  activateAgentKey(owner, sg);
+  return send(res, 200, { ...meBody(owner, sess), account_created: false });
+}
+
 const TRANSITIONS = { draft: ['scheduled', 'publishing', 'cancelled'], scheduled: ['draft', 'publishing', 'cancelled'], failed: ['scheduled', 'publishing'], partially_published: ['scheduled', 'publishing'] };
 const canMove = (p, to) => (TRANSITIONS[p.status] ?? []).includes(to);
 
@@ -255,6 +306,10 @@ async function handle(req, res) {
     if (String(body.password ?? '').length < 8) return fail(res, 400, 'VALIDATION_ERROR', 'password must be 8-128 characters');
     return send(res, 204);
   }
+
+  // Agent sign-up (D-025). Nothing is mailed: the created token is printed here. The fixed tokens "agent-new" (an address
+  // without an account) and "agent-existing" (demo@example.com) always work; "expired" and unknown ones are a 400.
+  if ((r = path.match(/^\/auth\/agent-signups(?:\/(preview|confirm|decline))?$/)) && m === 'POST') return agentSignup(req, res, r[1], body);
 
   // ---- authenticated
   const sess = sessions.get(cookies(req).socialos_session ?? '');

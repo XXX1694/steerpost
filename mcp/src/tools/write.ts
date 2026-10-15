@@ -30,7 +30,7 @@ export const writeTools = [
       content: z.string().min(1).describe("Post text"),
       social_account_ids: z.array(z.string().min(1)).min(1).describe("Target accounts from list_social_accounts"),
       media_ids: z.array(z.string().min(1)).optional().describe("Ids of files the user uploaded to the Steerpost media library. This server cannot upload files."),
-      title: z.string().optional().describe("Internal title (not published)"),
+      title: z.string().optional().describe("Post title. Networks with requires_title in list_platforms need it and publish it; others ignore it."),
       per_platform_content: perPlatform.optional(),
     },
     annotations: { title: "Create draft post", readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },

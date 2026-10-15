@@ -37,6 +37,8 @@ type Service struct {
 	requireVerified bool
 	// social is nil when no sign-in provider is configured.
 	social *socialState
+	// agents is nil when agent sign-up is off.
+	agents *agentState
 }
 
 // Deps bundles Service dependencies.
@@ -60,6 +62,8 @@ type Deps struct {
 	RequireVerification bool
 	// Social enables sign-in with external providers (D-023); nil leaves it off.
 	Social *SocialDeps
+	// AgentSignup enables sign-up by AI agents (D-025); nil leaves it off.
+	AgentSignup *AgentSignupDeps
 }
 
 // NewService creates the auth service.
@@ -81,6 +85,9 @@ func NewService(d Deps) (*Service, error) {
 		audit: d.Audit, clock: d.Clock, sessionTTL: d.SessionTTL, dummyHash: dummy,
 		tokens: d.Tokens, mail: d.Mail, forgot: d.Forgot, log: d.Log, webURL: strings.TrimRight(d.WebBaseURL, "/"),
 		requireVerified: d.RequireVerification}
+	if svc.agents, err = newAgentState(d.AgentSignup); err != nil {
+		return nil, err
+	}
 	if d.Social != nil {
 		if svc.social, err = newSocialState(*d.Social); err != nil {
 			return nil, err
@@ -235,12 +242,4 @@ func (s *Service) PurgeExpiredSessions(ctx context.Context) (int64, error) {
 
 func userActor(u *user.User, ci ClientInfo) actor.Actor {
 	return actor.Actor{UserID: u.ID, Type: actor.TypeUser, ID: u.ID.String(), Label: u.Email, RequestID: ci.RequestID, IP: ci.IP}
-}
-
-// truncate cuts s to at most n runes, never in the middle of a character.
-func truncate(s string, n int) string {
-	if r := []rune(s); len(r) > n {
-		return string(r[:n])
-	}
-	return s
 }

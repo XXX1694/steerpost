@@ -21,7 +21,7 @@ func (c fixedNow) Now() time.Time { return c.t }
 type spyGate struct{ reqs []approval.Request }
 
 func (g *spyGate) Require(_ context.Context, a actor.Actor, req approval.Request) error {
-	if a.NeedsApproval() {
+	if a.NeedsApproval(req.Action) {
 		g.reqs = append(g.reqs, req)
 	}
 	return nil

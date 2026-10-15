@@ -1,0 +1,37 @@
+Subject: An AI agent asks for access to Steerpost
+
+--- text ---
+An AI agent that calls itself "Claude Desktop" asked for access to a new Steerpost account for this email address. Nothing works until you confirm.
+
+Once you confirm, the agent can:
+- see your connected accounts, posts and analytics
+- write drafts and upload media
+- schedule posts at least 5 minutes ahead; they publish at that time without another check
+- connect social networks with credentials you give it, without asking you each time
+
+It cannot publish immediately, delete posts or disconnect accounts. You can revoke it at any time under Developer > MCP connections.
+
+Review and confirm (the link expires in 24 hours):
+
+https://app.example.com/agent-access#token=abc123
+
+Didn't expect this? Ignore this email. The agent's key never works without your confirmation.
+
+Steerpost
+
+--- html ---
+<!doctype html>
+<html><body style="font-family:sans-serif;line-height:1.5;color:#111">
+<p>An AI agent that calls itself <strong>Claude Desktop</strong> asked for access to a new Steerpost account for this email address. Nothing works until you confirm.</p>
+<p>Once you confirm, the agent can:</p>
+<ul>
+<li>see your connected accounts, posts and analytics</li>
+<li>write drafts and upload media</li>
+<li>schedule posts at least 5 minutes ahead; they publish at that time without another check</li>
+<li>connect social networks with credentials you give it, without asking you each time</li>
+</ul>
+<p>It cannot publish immediately, delete posts or disconnect accounts. You can revoke it at any time under Developer &gt; MCP connections.</p>
+<p><a href="https://app.example.com/agent-access#token=abc123">Review and confirm</a></p>
+<p>The link expires in 24 hours. Didn't expect this? Ignore this email. The agent's key never works without your confirmation.</p>
+<p style="color:#666;font-size:13px">Steerpost</p>
+</body></html>

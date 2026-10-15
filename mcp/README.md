@@ -1,20 +1,21 @@
 # Steerpost MCP server
 
-TypeScript MCP server (official `@modelcontextprotocol/sdk`) that exposes the Steerpost REST API as 14 tools.
+TypeScript MCP server (official `@modelcontextprotocol/sdk`) that exposes the Steerpost REST API as 17 tools.
 It holds no state and no social-network credentials: every call is forwarded to the REST API with the caller's API key.
-Tools are listed per key scope (`GET /me`), and the REST API enforces scopes again on every call.
+Tools are listed per key scope (`GET /me`), and the REST API enforces scopes again on every call. A caller without a key
+sees only `sign_up` (see [Agent sign-up](#agent-sign-up)).
 
 | Env | Default | |
 |---|---|---|
 | `STEERPOST_API_URL` (legacy `SOCIALOS_API_URL`) | `http://localhost:8080` | REST base (`/api/v1` is appended if missing) |
-| `STEERPOST_API_KEY` (legacy `SOCIALOS_API_KEY`) | – | stdio mode only |
+| `STEERPOST_API_KEY` (legacy `SOCIALOS_API_KEY`) | – | stdio mode only; without it the server starts in sign-up mode |
 | `PORT` / `HOST` | `3333` / `0.0.0.0` | HTTP mode |
 | `STEERPOST_TIMEOUT_MS` (legacy `SOCIALOS_TIMEOUT_MS`) | `15000` | upstream timeout |
 
 ```bash
 npm install && npm run build
 npm start                 # Streamable HTTP: POST /mcp, GET /health
-npm run start:stdio       # stdio (needs SOCIALOS_API_KEY)
+npm run start:stdio       # stdio (with SOCIALOS_API_KEY; without it only sign_up)
 npm run dev               # tsx watch
 npm test
 docker build -t socialos-local-mcp . && docker run -p 3333:3333 -e SOCIALOS_API_URL=http://api:8080 socialos-local-mcp
@@ -22,6 +23,22 @@ docker build -t socialos-local-mcp . && docker run -p 3333:3333 -e SOCIALOS_API_
 
 Dangerous tools (`publish_post`, `delete_post`, `disconnect_account`, and scheduling or editing a post that runs within the server's minimum lead, default 5 minutes) need the owner's approval in Steerpost: the first call answers `APPROVAL_REQUIRED` with an `approval_id` and does nothing, the owner approves under **Approvals**, and the agent repeats the identical call with `approval_id`. Grant their scopes
 (`posts:publish`, `posts:delete`, `social:disconnect`) only to keys you trust.
+
+## Agent sign-up
+
+An agent can onboard its owner without the owner creating a key by hand (D-025):
+
+1. Connect with no `Authorization` header (HTTP) or no `STEERPOST_API_KEY` (stdio). The only tool is `sign_up`.
+2. `sign_up` with the owner's email, a recognisable `agent_name` and `accept_terms: true` (only after the owner agreed to the
+   Terms). It answers with an `api_key`, shown once, and the same shape whether or not the address has an account.
+3. Reconnect with that key. Until the owner presses **Review and confirm** in the email (valid 24 hours), every call
+   answers `KEY_PENDING_CONFIRMATION` with the masked address and the deadline. An existing account must sign in to confirm.
+4. Once confirmed the key can read, write drafts, upload media, schedule posts at least 5 minutes ahead and connect
+   token-based networks with `connect_account` (see `list_platforms`) without asking each time. It can never publish
+   immediately, delete posts or disconnect accounts. The owner sees and revokes it under **Developer > MCP connections**.
+
+A malformed `Authorization` header is still `401`; only a missing one is anonymous. With `MAIL_PROVIDER=log` (development)
+the confirm link is written to the worker log instead of being emailed, and `sign_up` says so.
 
 ## Client configuration
 

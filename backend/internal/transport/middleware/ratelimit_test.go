@@ -184,3 +184,26 @@ func TestAgentRateLimit(t *testing.T) {
 		t.Errorf("nil limiter: %d", c)
 	}
 }
+
+// Anonymous agents reach the API through one MCP server. With a valid gateway secret each end client gets its own
+// bucket; without it (or with a forged one) every request counts against the caller's own address.
+func TestRateLimitUsesTheGatewayVouchedAddress(t *testing.T) {
+	const secret = "0123456789abcdef0123456789abcdef"
+	h := middleware.RequestID(middleware.Gateway(secret)(middleware.RateLimit(middleware.NewLimiter(0.001, 1), nil, nil, "t:")(http.HandlerFunc(ok))))
+	hit := func(gateway, clientIP string) int {
+		return do(h, "POST", "/", func(r *http.Request) {
+			r.RemoteAddr = "192.0.2.10:5000" // the MCP server
+			r.Header.Set(middleware.GatewayHeader, gateway)
+			r.Header.Set(middleware.ClientIPHeader, clientIP)
+		}).Code
+	}
+	if a, b := hit(secret, "198.51.100.1"), hit(secret, "198.51.100.2"); a != 204 || b != 204 {
+		t.Fatalf("two vouched clients must have their own buckets: %d %d", a, b)
+	}
+	if c := hit(secret, "198.51.100.1"); c != 429 {
+		t.Fatalf("the same vouched client again: %d", c)
+	}
+	if a, b := hit("forged", "198.51.100.3"), hit("forged", "198.51.100.4"); a != 204 || b != 429 {
+		t.Fatalf("a forged gateway header must fall back to the peer's bucket: %d %d", a, b)
+	}
+}

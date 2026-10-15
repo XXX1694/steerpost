@@ -95,6 +95,7 @@
     "colActions": "Aktionen",
     "badgeTrusted": "Vertrauenswürdig: handelt ohne Rückfrage",
     "badgeAsks": "Fragt bei gefährlichen Aktionen nach",
+    "badgeTrustedConnect": "Darf Konten verbinden",
     "expired": "Abgelaufen",
     "revoke": "Widerrufen",
     "revokeLabel": "{name} widerrufen",

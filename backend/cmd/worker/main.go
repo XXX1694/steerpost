@@ -92,7 +92,7 @@ func purgeApprovals(ctx context.Context, a *app.App, retention time.Duration, lo
 
 // sweepAccountData runs the owner-rights sweeps once an hour until ctx ends: it deletes expired export archives and
 // repairs stuck export rows, queues the purge of accounts whose deletion grace period is over, and deletes expired
-// sign-in flows.
+// sign-in flows and agent sign-ups.
 func sweepAccountData(ctx context.Context, a *app.App, log *slog.Logger) {
 	t := time.NewTicker(time.Hour)
 	defer t.Stop()
@@ -111,6 +111,12 @@ func sweepAccountData(ctx context.Context, a *app.App, log *slog.Logger) {
 			log.WarnContext(ctx, "sign-in flow purge failed", slog.Any("error", err))
 		} else if n > 0 {
 			log.InfoContext(ctx, "expired sign-in flows deleted", slog.Int64("count", n))
+		}
+		// Agent sign-ups nobody confirmed within a day hold an address and a key hash that can never be used.
+		if n, err := a.Services.Auth.PurgeExpiredAgentSignups(ctx); err != nil {
+			log.WarnContext(ctx, "agent sign-up purge failed", slog.Any("error", err))
+		} else if n > 0 {
+			log.InfoContext(ctx, "expired agent sign-ups deleted", slog.Int64("count", n))
 		}
 		select {
 		case <-ctx.Done():

@@ -34,6 +34,11 @@ const HINTS: Record<string, string> = {
   CONFLICT: "The action conflicts with the current state of the resource.",
 };
 
+/** The owner has not confirmed a key from sign_up yet; the API names the masked address and the deadline (D-025). */
+function pendingHint(f: Readonly<Record<string, string>>): string {
+  return `The owner has not confirmed this key yet. Ask them to open the email Steerpost sent to ${f.email_masked ?? "their address"} and press Confirm before ${f.expires_at ?? "the link expires"}. Do not call sign_up again.`;
+}
+
 /** approval_id, where to approve and until when; the API sends them as plain strings. */
 function approvalDetails(f: Readonly<Record<string, string>>): string {
   const bits = [`approval_id: ${f.approval_id ?? "unknown"}`];
@@ -49,7 +54,7 @@ export function errorResult(message: string): CallToolResult {
 /** Maps any thrown value to a safe, descriptive tool error. */
 export function toToolError(err: unknown): CallToolResult {
   if (err instanceof ApiError) {
-    const hint = HINTS[err.code];
+    const hint = err.code === "KEY_PENDING_CONFIRMATION" ? pendingHint(err.fields) : HINTS[err.code];
     const parts = [`${err.code}: ${err.message}`];
     if (hint) parts.push(hint);
     if (err.code === "APPROVAL_REQUIRED") parts.push(approvalDetails(err.fields));

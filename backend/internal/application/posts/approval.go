@@ -30,7 +30,7 @@ type gated struct {
 }
 
 func (s *Service) require(ctx context.Context, a actor.Actor, g gated) error {
-	if !a.NeedsApproval() {
+	if !a.NeedsApproval(g.action) {
 		return nil
 	}
 	ms := g.media
@@ -142,7 +142,7 @@ func (s *Service) requireDelete(ctx context.Context, a actor.Actor, p *post.Post
 // tooSoon: a key scheduling closer than the minimum lead is publishing now with extra steps (OD-2). A lead of 0
 // switches the rule off.
 func (s *Service) tooSoon(a actor.Actor, at time.Time) bool {
-	return a.NeedsApproval() && s.minAgentLead > 0 && at.Before(s.clock.Now().Add(s.minAgentLead))
+	return a.NeedsApproval(approval.ActionPostScheduleSoon) && s.minAgentLead > 0 && at.Before(s.clock.Now().Add(s.minAgentLead))
 }
 
 // requireSoon gates a schedule or retry-for-later of an unchanged post.

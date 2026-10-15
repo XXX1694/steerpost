@@ -95,6 +95,7 @@
     "colActions": "Действия",
     "badgeTrusted": "Доверенный: действует без вопросов",
     "badgeAsks": "Спрашивает перед опасными действиями",
+    "badgeTrustedConnect": "Может подключать аккаунты",
     "expired": "Срок истёк",
     "revoke": "Отозвать",
     "revokeLabel": "Отозвать: {name}",

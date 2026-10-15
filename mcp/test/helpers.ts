@@ -19,8 +19,18 @@ export interface FakeReply {
 
 export const ALL_SCOPES = [
   "social:read", "posts:read", "posts:write", "posts:schedule",
-  "posts:publish", "posts:delete", "social:disconnect", "media:write", "analytics:read",
+  "posts:publish", "posts:delete", "social:disconnect", "social:connect", "media:write", "analytics:read",
 ];
+
+/** What the API says about a key from sign_up that the owner has not confirmed (fields of KEY_PENDING_CONFIRMATION). */
+export interface PendingKey {
+  email_masked: string;
+  expires_at: string;
+  scopes: string;
+}
+
+/** Routes the fake API answers without a key, like the real public sign-up route. */
+const PUBLIC_ROUTES = new Set(["POST /auth/agent-signups"]);
 
 export const VALID_KEY = "sk_live_testkey123";
 
@@ -32,6 +42,8 @@ export class FakeApi {
   /** Requests to GET /me (the per-request key check), kept apart from tool calls. */
   meCalls: Recorded[] = [];
   keys = new Map<string, string[]>([[VALID_KEY, ALL_SCOPES]]);
+  /** Keys that answer 403 KEY_PENDING_CONFIRMATION on every route, /me included. */
+  pending = new Map<string, PendingKey>();
   /** Override reply for "METHOD /path" (path without query and without /api/v1). */
   replies = new Map<string, FakeReply>();
 
@@ -47,10 +59,16 @@ export class FakeApi {
           res.end(body === undefined ? "" : JSON.stringify(body));
         };
         const key = /^Bearer (.+)$/.exec(req.headers.authorization ?? "")?.[1];
-        const scopes = key ? this.keys.get(key) : undefined;
-        if (!scopes) return send(401, { error: { code: "UNAUTHENTICATED", message: "bad key", request_id: "r-401" } });
         const u = new URL(rec.path, "http://x");
         const route = u.pathname.replace(/^\/api\/v1/, "");
+        const waiting = key ? this.pending.get(key) : undefined;
+        if (waiting) {
+          (route === "/me" ? this.meCalls : this.calls).push({ ...rec, path: route });
+          return send(403, { error: { code: "KEY_PENDING_CONFIRMATION", message: "this API key is waiting for the owner's confirmation", request_id: "r-403", fields: waiting } });
+        }
+        const scopes = key ? this.keys.get(key) : undefined;
+        const open = !key && PUBLIC_ROUTES.has(`${rec.method} ${route}`);
+        if (!scopes && !open) return send(401, { error: { code: "UNAUTHENTICATED", message: "bad key", request_id: "r-401" } });
         if (route === "/me") {
           this.meCalls.push({ ...rec, path: route });
           return send(200, { id: "u1", email: "a@b.c", scopes });
@@ -100,6 +118,13 @@ export async function connect(mcpUrl: string, key = VALID_KEY): Promise<Client> 
   await client.connect(
     new StreamableHTTPClientTransport(new URL(mcpUrl), { requestInit: { headers: { Authorization: `Bearer ${key}` } } }),
   );
+  return client;
+}
+
+/** An MCP client that sends no Authorization header (an agent that has not signed up yet). */
+export async function connectAnonymous(mcpUrl: string): Promise<Client> {
+  const client = new Client({ name: "test", version: "0" });
+  await client.connect(new StreamableHTTPClientTransport(new URL(mcpUrl)));
   return client;
 }
 

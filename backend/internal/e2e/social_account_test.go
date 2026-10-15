@@ -16,7 +16,9 @@ import (
 // sign in again (403 REAUTH_REQUIRED) instead of hitting a 500 or being locked out of deletion (AGENTS section 7).
 func TestSocialUserWithoutPasswordCanDeleteTheAccount(t *testing.T) {
 	clk := &steppingClock{}
-	clk.set(time.Date(2026, 10, 9, 12, 0, 0, 0, time.UTC))
+	// Start at the real time: the session cookie's Max-Age is counted on the real clock, so a start in the past expires
+	// the cookie before the first request.
+	clk.set(time.Now().UTC())
 	r := newSocialRig(t, withClock(clk))
 	const email = "pat@example.com"
 	pat := r.githubSignUp(t, 1501, "pat", email)

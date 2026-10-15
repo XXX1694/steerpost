@@ -19,7 +19,9 @@ const (
 	InsufficientScope Code = "INSUFFICIENT_SCOPE"
 	EmailNotVerified  Code = "EMAIL_NOT_VERIFIED"
 	// ReauthRequired: the action needs a fresh sign-in (a user without a password cannot confirm with one).
-	ReauthRequired         Code = "REAUTH_REQUIRED"
+	ReauthRequired Code = "REAUTH_REQUIRED"
+	// KeyPendingConfirmation: the API key comes from an agent sign-up its owner has not confirmed yet (D-025).
+	KeyPendingConfirmation Code = "KEY_PENDING_CONFIRMATION"
 	QuotaExceeded          Code = "QUOTA_EXCEEDED"
 	ApprovalRequired       Code = "APPROVAL_REQUIRED"
 	NotFound               Code = "NOT_FOUND"

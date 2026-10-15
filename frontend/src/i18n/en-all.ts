@@ -16,6 +16,7 @@ import calendar from '../../messages/en/calendar.json';
 import composer from '../../messages/en/composer.json';
 import media from '../../messages/en/media.json';
 import developer from '../../messages/en/developer.json';
+import agentAccess from '../../messages/en/agentAccess.json';
 
 /** The whole English catalog, assembled from its bundles. Imported statically, so English arrives with the page. */
 const en: Messages = {
@@ -36,6 +37,7 @@ const en: Messages = {
   composer,
   media,
   developer,
+  agentAccess,
 };
 
 export default en;

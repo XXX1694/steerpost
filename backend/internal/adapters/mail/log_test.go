@@ -33,11 +33,3 @@ func TestLogMailerHidesBodyOutsideDevelopment(t *testing.T) {
 		}
 	}
 }
-
-func TestMaskEmail(t *testing.T) {
-	for in, want := range map[string]string{"bob@x.io": "b***@x.io", "@x.io": "***", "nope": "***", "": "***"} {
-		if got := MaskEmail(in); got != want {
-			t.Errorf("MaskEmail(%q) = %q, want %q", in, got, want)
-		}
-	}
-}

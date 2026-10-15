@@ -37,3 +37,11 @@ func (s *Service) newSession(ctx context.Context, userID uuid.UUID, ci ClientInf
 	}
 	return IssuedSession{Token: token, CSRFToken: csrf, ExpiresAt: sess.ExpiresAt}, nil
 }
+
+// truncate cuts s to at most n runes, never in the middle of a character.
+func truncate(s string, n int) string {
+	if r := []rune(s); len(r) > n {
+		return string(r[:n])
+	}
+	return s
+}

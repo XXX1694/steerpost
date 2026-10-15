@@ -16,8 +16,9 @@ import calendar from '../../../messages/fr/calendar.json';
 import composer from '../../../messages/fr/composer.json';
 import media from '../../../messages/fr/media.json';
 import developer from '../../../messages/fr/developer.json';
+import agentAccess from '../../../messages/fr/agentAccess.json';
 
 /** fr, assembled from messages/fr/*.json. One module per locale, so the build emits one lazy chunk per locale. `npm run i18n:check` keeps this list equal to the files on disk. */
-const catalog: Catalog = { nav, language, common, errors, shell, legal, auth, posts, settings, dashboard, accounts, analytics, approvals, calendar, composer, media, developer };
+const catalog: Catalog = { nav, language, common, errors, shell, legal, auth, posts, settings, dashboard, accounts, analytics, approvals, calendar, composer, media, developer, agentAccess };
 
 export default catalog;

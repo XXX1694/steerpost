@@ -16,8 +16,9 @@ import calendar from '../../../messages/pt-BR/calendar.json';
 import composer from '../../../messages/pt-BR/composer.json';
 import media from '../../../messages/pt-BR/media.json';
 import developer from '../../../messages/pt-BR/developer.json';
+import agentAccess from '../../../messages/pt-BR/agentAccess.json';
 
 /** pt-BR, assembled from messages/pt-BR/*.json. One module per locale, so the build emits one lazy chunk per locale. `npm run i18n:check` keeps this list equal to the files on disk. */
-const catalog: Catalog = { nav, language, common, errors, shell, legal, auth, posts, settings, dashboard, accounts, analytics, approvals, calendar, composer, media, developer };
+const catalog: Catalog = { nav, language, common, errors, shell, legal, auth, posts, settings, dashboard, accounts, analytics, approvals, calendar, composer, media, developer, agentAccess };
 
 export default catalog;

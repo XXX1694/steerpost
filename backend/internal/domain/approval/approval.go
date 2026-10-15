@@ -41,10 +41,17 @@ const (
 const (
 	PolicyApprove = "approve"
 	PolicyTrusted = "trusted"
+	// PolicyTrustedConnect skips the approval for connecting a token network only; every other dangerous action still
+	// needs the owner. Only agent sign-up keys get it (D-025).
+	PolicyTrustedConnect = "trusted_connect"
 )
 
-// ValidPolicy reports whether p is a known dangerous_policy.
+// ValidPolicy reports whether p is a policy the owner may choose for a new key. trusted_connect is not one: it is given
+// only by the agent sign-up flow.
 func ValidPolicy(p string) bool { return p == PolicyApprove || p == PolicyTrusted }
+
+// KnownPolicy reports whether p is any stored dangerous_policy.
+func KnownPolicy(p string) bool { return ValidPolicy(p) || p == PolicyTrustedConnect }
 
 // Approval is one stored consent record. It is bound to the credential, the action, the target and a fingerprint of
 // the payload, so it cannot be replayed for anything else.

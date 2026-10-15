@@ -95,6 +95,7 @@
     "colActions": "操作",
     "badgeTrusted": "受信任：无需询问",
     "badgeAsks": "危险操作前会询问",
+    "badgeTrustedConnect": "可以连接账号",
     "expired": "已过期",
     "revoke": "撤销",
     "revokeLabel": "撤销{name}",

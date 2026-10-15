@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/socialos/backend/internal/domain/apikey"
+	"github.com/socialos/backend/internal/domain/approval"
 	"github.com/socialos/backend/internal/domain/errs"
 )
 
@@ -79,6 +80,32 @@ func TestSessionIsFresh(t *testing.T) {
 	} {
 		if got := (Actor{SessionCreatedAt: tc.created}).SessionIsFresh(now); got != tc.want {
 			t.Errorf("%s: got %v, want %v", name, got, tc.want)
+		}
+	}
+}
+
+func TestNeedsApprovalByPolicyAndAction(t *testing.T) {
+	key := func(policy string) Actor { return Actor{UserID: uuid.New(), Type: TypeAPIKey, DangerousPolicy: policy} }
+	actions := []approval.Action{approval.ActionPostPublish, approval.ActionPostRetryNow, approval.ActionPostDelete,
+		approval.ActionAccountDisconnect, approval.ActionAccountConnect, approval.ActionPostScheduleSoon}
+	for _, act := range actions {
+		for name, tc := range map[string]struct {
+			a    Actor
+			want bool
+		}{
+			"approve key":    {key(approval.PolicyApprove), true},
+			"unset policy":   {key(""), true},
+			"unknown policy": {key("bogus"), true},
+			"trusted key":    {key(approval.PolicyTrusted), false},
+			// trusted_connect skips only the connect approval.
+			"trusted_connect key": {key(approval.PolicyTrustedConnect), act != approval.ActionAccountConnect},
+			"session":             {Actor{UserID: uuid.New(), Type: TypeUser, SessionID: uuid.New()}, false},
+			"scheduler":           {Scheduler(uuid.New()), false},
+			"system":              {System(uuid.New(), "telegram"), false},
+		} {
+			if got := tc.a.NeedsApproval(act); got != tc.want {
+				t.Errorf("%s, %s: NeedsApproval = %v, want %v", name, act, got, tc.want)
+			}
 		}
 	}
 }

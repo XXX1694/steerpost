@@ -28,7 +28,8 @@ export interface RequestOptions {
 
 export interface ClientOptions {
   baseUrl: string;
-  apiKey: string;
+  /** The caller's key; omitted for anonymous calls (sign_up), which then carry no Authorization header. */
+  apiKey?: string;
   timeoutMs: number;
   /** Propagated as X-Request-Id; generated when omitted. */
   requestId?: string;
@@ -43,7 +44,7 @@ export interface ClientOptions {
 
 const TOOL_NAME = /^[a-z_]{1,64}$/;
 
-/** Typed client for the Steerpost REST API, authenticated with the caller's API key. */
+/** Typed client for the Steerpost REST API, authenticated with the caller's API key when there is one. */
 export class SocialOSClient {
   readonly requestId: string;
   private readonly fetchImpl: typeof fetch;
@@ -64,11 +65,11 @@ export class SocialOSClient {
       if (v !== undefined) url.searchParams.set(k, String(v));
     }
     const headers: Record<string, string> = {
-      Authorization: `Bearer ${this.opts.apiKey}`,
       Accept: "application/json",
       "X-Request-Id": this.requestId,
       "User-Agent": "socialos-mcp/0.1",
     };
+    if (this.opts.apiKey) headers.Authorization = `Bearer ${this.opts.apiKey}`;
     if (this.opts.tool && TOOL_NAME.test(this.opts.tool)) headers["X-MCP-Tool"] = this.opts.tool;
     if (o.approvalId) headers["X-Approval-Id"] = o.approvalId;
     if (this.opts.gatewaySecret) {

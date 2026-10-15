@@ -91,3 +91,41 @@ func TestMailsUseServerAdminAndNeverPromiseAnExportPage(t *testing.T) {
 		t.Errorf("settings has no export page: %s", m.Text)
 	}
 }
+
+func TestAgentAccessGolden(t *testing.T) {
+	for file, newAccount := range map[string]bool{"agent_access_new": true, "agent_access_existing": false} {
+		m, err := Render(AgentAccess, "alice@example.com", Data{Link: "https://app.example.com/agent-access#token=abc123",
+			ExpiresIn: "24 hours", AgentName: "Claude Desktop", NewAccount: newAccount})
+		if err != nil {
+			t.Fatal(err)
+		}
+		got := "Subject: " + m.Subject + "\n\n--- text ---\n" + m.Text + "\n--- html ---\n" + m.HTML
+		path := filepath.Join("testdata", file+".golden")
+		if *update {
+			if err := os.WriteFile(path, []byte(got), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			continue
+		}
+		want, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("%s: %v (run go test ./internal/adapters/mail -update)", file, err)
+		}
+		if string(want) != got {
+			t.Errorf("%s differs from %s:\n%s", file, path, got)
+		}
+	}
+}
+
+func TestAgentAccessEscapesTheAgentName(t *testing.T) {
+	m, err := Render(AgentAccess, "a@b.c", Data{Link: "https://x.test/agent-access#token=t", ExpiresIn: "24 hours", AgentName: `<a href="https://evil.test">x</a>`})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(m.HTML, "<a href=\"https://evil.test\"") || strings.Contains(m.HTML, "evil.test\">") {
+		t.Fatalf("agent name must be escaped in HTML: %s", m.HTML)
+	}
+	if !strings.Contains(m.HTML, "You will be asked to sign in") || strings.Contains(m.Text, "a new Steerpost account") {
+		t.Fatalf("existing-account variant: %s", m.Text)
+	}
+}

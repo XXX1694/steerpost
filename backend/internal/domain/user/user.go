@@ -81,6 +81,16 @@ func ValidatePassword(pw string) error {
 	return nil
 }
 
+// MaskEmail turns "alice@example.com" into "a***@example.com", for logs and for answers that must not reveal a full
+// address.
+func MaskEmail(addr string) string {
+	at := strings.LastIndex(addr, "@")
+	if at < 1 {
+		return "***"
+	}
+	return addr[:1] + "***" + addr[at:]
+}
+
 // ValidateDisplayName trims and bounds a display name.
 func ValidateDisplayName(raw string) (string, error) {
 	s := strings.TrimSpace(raw)

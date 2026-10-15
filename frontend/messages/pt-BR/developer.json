@@ -95,6 +95,7 @@
     "colActions": "Ações",
     "badgeTrusted": "Confiável: age sem perguntar",
     "badgeAsks": "Pergunta antes de ações perigosas",
+    "badgeTrustedConnect": "Pode conectar contas",
     "expired": "Expirada",
     "revoke": "Revogar",
     "revokeLabel": "Revogar {name}",

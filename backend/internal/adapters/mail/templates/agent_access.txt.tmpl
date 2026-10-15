@@ -1,0 +1,19 @@
+An AI agent that calls itself "{{.AgentName}}" asked for access to {{if .NewAccount}}a new {{.Product}} account for this email address{{else}}your {{.Product}} account{{end}}. Nothing works until you confirm.
+
+Once you confirm, the agent can:
+- see your connected accounts, posts and analytics
+- write drafts and upload media
+- schedule posts at least 5 minutes ahead; they publish at that time without another check
+- connect social networks with credentials you give it, without asking you each time
+
+It cannot publish immediately, delete posts or disconnect accounts. You can revoke it at any time under Developer > MCP connections.
+{{if not .NewAccount}}
+You will be asked to sign in to {{.Product}} first.
+{{end}}
+Review and confirm (the link expires in {{.ExpiresIn}}):
+
+{{.Link}}
+
+Didn't expect this? Ignore this email. The agent's key never works without your confirmation.
+
+{{.Product}}

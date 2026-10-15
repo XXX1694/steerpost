@@ -18,6 +18,7 @@ import type {
   SocialAccount,
 } from '../types';
 import { decide, findApproval, visibleApprovals } from './approvals';
+import { handleAgentSignup } from './agent-access';
 import { svgThumb } from './art';
 import { cancelDeletion, DEMO_GRACE_DAYS, requestDeletion } from './deletion';
 import { handleExports } from './exports';
@@ -306,6 +307,15 @@ export class DemoEngine {
         s.user.password = password;
         return ok(204);
       });
+    }
+
+    // Agent sign-up (D-025): public routes; confirming an existing account checks the session itself.
+    if (path.startsWith('/auth/agent-signups') && m === 'POST') {
+      const res = handleAgentSignup(s, path, body, { now: this.now(), newId: newUuid, me: () => this.me() as Record<string, unknown> });
+      if (res) {
+        if (res.status === 200 && path.endsWith('/confirm')) this.audit(this.user, 'agent_signup.confirmed', 'api_key', null);
+        return res;
+      }
     }
 
     // ---- everything below needs a session
