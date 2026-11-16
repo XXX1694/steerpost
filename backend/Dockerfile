@@ -19,7 +19,7 @@
 # the current standard-library security fixes. Keep GO_VERSION in .github/workflows/ci.yml on the same minor version.
 # Base images are pinned by digest, so a registry or mirror cannot hand a release a different or stale image for the
 # tag; Dependabot (docker ecosystem) bumps the digests weekly.
-FROM --platform=$BUILDPLATFORM golang:1.26-alpine@sha256:c95332c2af86b6d89b91bd0500f4b9529ccbd090a0d1855c6d1ceaa142ae8615 AS build
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine@sha256:eb61c3873c97416fff0116553fff65d67a3549f72e11d9758849a689cdd8b523 AS build
 ARG TARGETOS=linux
 ARG TARGETARCH
 WORKDIR /src
